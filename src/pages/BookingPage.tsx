@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, MapPin, CreditCard, CheckCircle, X } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
 import { useAuth } from '../context/AuthContext';
+import BookingItems from '../components/BookingItems';
 
 export default function BookingPage() {
   const { showId } = useParams<{ showId: string }>();
@@ -12,6 +13,7 @@ export default function BookingPage() {
     shows, 
     seats, 
     selectedSeats, 
+    selectedItems,
     initializeSeats, 
     selectSeat, 
     deselectSeat, 
@@ -47,7 +49,9 @@ export default function BookingPage() {
     );
   }
 
-  const totalAmount = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+  const seatsTotal = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+  const itemsTotal = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalAmount = seatsTotal + itemsTotal;
 
   const handleSeatClick = (seatId: string) => {
     const seat = seats.find(s => s.id === seatId);
@@ -110,6 +114,9 @@ export default function BookingPage() {
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <p className="text-sm text-gray-600">Booking Details</p>
             <p className="font-semibold">{selectedSeats.length} tickets</p>
+            {selectedItems.length > 0 && (
+              <p className="text-sm text-gray-600">{selectedItems.length} additional items</p>
+            )}
             <p className="text-amber-600 font-bold">UGX {totalAmount.toLocaleString()}</p>
           </div>
           <div className="space-y-3">
@@ -173,7 +180,7 @@ export default function BookingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Seat Selection */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Your Seats</h2>
               
@@ -234,6 +241,9 @@ export default function BookingPage() {
                   ))}
               </div>
             </div>
+            
+            {/* Additional Items */}
+            <BookingItems />
           </div>
 
           {/* Booking Summary */}
@@ -265,9 +275,37 @@ export default function BookingPage() {
                         </div>
                       </div>
                     ))}
+                    
+                    {selectedItems.map((item) => (
+                      <div key={item.id} className="flex justify-between items-center border-t pt-2">
+                        <div>
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-sm text-gray-500 block">
+                            Qty: {item.quantity}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-semibold mr-2">
+                            UGX {(item.price * item.quantity).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   
-                  <div className="border-t pt-4 mb-6">
+                  <div className="border-t pt-4 mb-6 space-y-2">
+                    {seatsTotal > 0 && (
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Seats Subtotal</span>
+                        <span>UGX {seatsTotal.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {itemsTotal > 0 && (
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Items Subtotal</span>
+                        <span>UGX {itemsTotal.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold">Total</span>
                       <span className="text-xl font-bold text-amber-600">

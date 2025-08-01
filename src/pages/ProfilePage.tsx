@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { useBooking } from '../context/BookingContext';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const { bookings } = useBooking();
   const [activeTab, setActiveTab] = useState<'bookings' | 'profile' | 'preferences'>('bookings');
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!user) {
     return (
@@ -79,6 +80,12 @@ export default function ProfilePage() {
               >
                 <Edit3 className="h-4 w-4 mr-2" />
                 Edit Profile
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 font-medium"
+              >
+                Delete Account
               </button>
               <button
                 onClick={logout}
@@ -305,6 +312,45 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Account</h2>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete your account? This action cannot be undone. 
+                Your bookings and reviews will be preserved for record-keeping purposes.
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (deleteAccount) {
+                      const success = await deleteAccount();
+                      if (success) {
+                        alert('Account deleted successfully');
+                      } else {
+                        alert('Failed to delete account');
+                      }
+                    }
+                    setShowDeleteConfirm(false);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

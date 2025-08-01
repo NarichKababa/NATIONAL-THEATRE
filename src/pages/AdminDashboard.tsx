@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { BarChart3, Users, Calendar, Star, TrendingUp, DollarSign, MapPin, Clock } from 'lucide-react';
+import AdminUserManagement from '../components/AdminUserManagement';
+import RealTimeReviews from '../components/RealTimeReviews';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'shows' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'shows' | 'users' | 'reviews'>('overview');
 
   // Mock data for demonstration
   const stats = {
@@ -44,7 +46,8 @@ export default function AdminDashboard() {
                 { id: 'overview', label: 'Overview', icon: BarChart3 },
                 { id: 'bookings', label: 'Bookings', icon: Calendar },
                 { id: 'shows', label: 'Shows', icon: MapPin },
-                { id: 'users', label: 'Users', icon: Users }
+                { id: 'users', label: 'Users', icon: Users },
+                { id: 'reviews', label: 'Reviews', icon: Star }
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -253,57 +256,12 @@ export default function AdminDashboard() {
 
             {/* Users Tab */}
             {activeTab === 'users' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-                  <div className="flex space-x-3">
-                    <input
-                      type="search"
-                      placeholder="Search users..."
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                    <button className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-amber-600 hover:to-orange-700">
-                      Export Users
-                    </button>
-                  </div>
-                </div>
+              <AdminUserManagement />
+            )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">{stats.totalUsers.toLocaleString()}</div>
-                    <div className="text-gray-600">Total Users</div>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">2,847</div>
-                    <div className="text-gray-600">Active Users</div>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                    <div className="text-3xl font-bold text-orange-600 mb-2">573</div>
-                    <div className="text-gray-600">New This Month</div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent User Activity</h3>
-                  <div className="space-y-3">
-                    {[
-                      { name: 'Sarah Nakimuli', action: 'Booked tickets for The Pearl of Africa', time: '2 hours ago' },
-                      { name: 'David Mukasa', action: 'Created new account', time: '4 hours ago' },
-                      { name: 'Grace Namatovu', action: 'Left a 5-star review', time: '6 hours ago' },
-                      { name: 'Michael Ssemakula', action: 'Updated profile information', time: '1 day ago' },
-                      { name: 'Ruth Kisakye', action: 'Cancelled booking for Kampala Nights', time: '2 days ago' }
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{activity.name}</h4>
-                          <p className="text-sm text-gray-600">{activity.action}</p>
-                        </div>
-                        <div className="text-sm text-gray-500">{activity.time}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* Reviews Tab */}
+            {activeTab === 'reviews' && (
+              <RealTimeReviews />
             )}
           </div>
         </div>
