@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useActivityLogger } from '../hooks/useActivityLogger';
 
 interface User {
   id: string;
@@ -24,8 +23,60 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Initialize activity logger after user is set
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await loadUserProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error loading user profile:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (profile) {
+        setUser({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          role: profile.role,
+          avatar: profile.avatar
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logActivity = async (userId: string, activityType: string, description: string, metadata?: any) => {
     try {
       await supabase
@@ -41,72 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    // Check for existing session
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          // Get user profile from database
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser({
-              id: profile.id,
-              name: profile.name,
-              email: profile.email,
-              role: profile.role,
-              avatar: profile.avatar
-            });
-            
-            // Update last login
-            await supabase
-              .from('users')
-              .update({ last_login: new Date().toISOString() })
-              .eq('id', profile.id);
-          }
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setUser({
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role,
-            avatar: profile.avatar
-          });
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -114,39 +99,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Login error:', error);
+        return false;
+      }
 
       if (data.user) {
-        // Get user profile
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profile) {
-          const userData = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role,
-            avatar: profile.avatar
-          };
-          
-          setUser(userData);
-          
-          // Log login activity
-          await logActivity(profile.id, 'login', 'User logged in');
-          
-          // Update last login
-          await supabase
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', profile.id);
-          
-          return true;
-        }
+        // User profile will be loaded by the auth state change listener
+        return true;
       }
+      
       return false;
     } catch (error) {
       console.error('Login failed:', error);
@@ -158,39 +120,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Registration error:', error);
+        return false;
+      }
 
       if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            name,
-            email,
-            role: 'user',
-            is_active: true
-          });
-
-        if (profileError) throw profileError;
-
-        const userData = {
-          id: data.user.id,
-          name,
-          email,
-          role: 'user' as const
-        };
-        
-        setUser(userData);
-        
-        // Log registration activity
-        await logActivity(data.user.id, 'registration', 'User account created');
-        
+        // User profile will be created by the database trigger
+        // and loaded by the auth state change listener
         return true;
       }
+      
       return false;
     } catch (error) {
       console.error('Registration failed:', error);
@@ -200,15 +148,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     if (user) {
-      // Log logout activity
+      // Log logout activity before signing out
       await logActivity(user.id, 'logout', 'User logged out');
     }
     
-    await supabase.auth.signOut();
-    setUser(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const deleteAccount = async () => {
+  const deleteAccount = async (): Promise<boolean> => {
     if (!user) return false;
     
     try {
@@ -216,13 +166,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await logActivity(user.id, 'account_deletion', 'User deleted their account');
       
       // Mark user as inactive instead of deleting
-      await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({ is_active: false })
         .eq('id', user.id);
       
-      await supabase.auth.signOut();
-      setUser(null);
+      if (updateError) throw updateError;
+      
+      // Sign out the user
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      
       return true;
     } catch (error) {
       console.error('Account deletion failed:', error);

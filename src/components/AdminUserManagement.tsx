@@ -86,33 +86,36 @@ export default function AdminUserManagement() {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
+      // Create user via Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
         email: newUser.email,
-        password: newUser.password,
-        email_confirm: true
+        password: newUser.password
       });
 
       if (error) throw error;
 
       if (data.user) {
-        await supabase
+        // Update the user profile with admin role if needed
+        const { error: updateError } = await supabase
           .from('users')
-          .insert({
-            id: data.user.id,
+          .update({
             name: newUser.name,
-            email: newUser.email,
-            role: newUser.role,
-            is_active: true
-          });
+            role: newUser.role
+          })
+          .eq('id', data.user.id);
+
+        if (updateError) throw updateError;
 
         // Log activity
-        await supabase
+        const { error: activityError } = await supabase
           .from('user_activity')
           .insert({
             user_id: data.user.id,
             activity_type: 'admin_created',
             activity_description: `Account created by admin: ${currentUser?.name}`
           });
+
+        if (activityError) console.error('Failed to log activity:', activityError);
 
         setNewUser({ name: '', email: '', password: '', role: 'user' });
         setShowCreateForm(false);

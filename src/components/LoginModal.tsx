@@ -35,7 +35,7 @@ export default function LoginModal({ onClose }: LoginModalProps) {
       if (success) {
         onClose();
       } else {
-        setError('Invalid credentials. Try: sarah@example.com / password');
+        setError(isLogin ? 'Invalid email or password. Please try again.' : 'Registration failed. Please try again.');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -140,7 +140,7 @@ export default function LoginModal({ onClose }: LoginModalProps) {
           {isLogin && (
             <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-gray-50 rounded-md">
               <p><strong>Demo Accounts:</strong></p>
-              <p>User: sarah@example.com / password</p>
+              <p>User: user@example.com / password</p>
               <p>Admin: admin@theatre.ug / password</p>
             </div>
           )}
