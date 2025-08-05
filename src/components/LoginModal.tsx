@@ -25,26 +25,18 @@ export default function LoginModal({ onClose }: LoginModalProps) {
     setError('');
 
     try {
-      let success = false;
       if (isLogin) {
-        success = await login(formData.email, formData.password);
-        if (!success) {
-          setError('Invalid email or password. Please try again.');
-        }
+        await login(formData.email, formData.password);
       } else {
-        success = await register(formData.name, formData.email, formData.password);
-        if (!success) {
-          setError('Registration failed. Please try again.');
-        }
+        await register(formData.name, formData.email, formData.password);
       }
 
-      if (success) {
-        setFormData({ name: '', email: '', password: '' });
-        onClose();
-      }
+      setFormData({ name: '', email: '', password: '' });
+      onClose();
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred. Please try again.';
+      setError(errorMessage);
       console.error('Authentication error:', err);
-      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -144,9 +136,10 @@ export default function LoginModal({ onClose }: LoginModalProps) {
           </div>
 
           {isLogin && (
-            <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-gray-50 rounded-md">
-              <p><strong>New to the platform?</strong></p>
-              <p>Create an account to get started with booking shows and leaving reviews.</p>
+            <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-blue-50 rounded-md">
+              <p><strong>Demo Account:</strong></p>
+              <p>Register with <code>admin@theatre.ug</code> to get admin access</p>
+              <p>Or create any account to get started as a regular user</p>
             </div>
           )}
         </form>

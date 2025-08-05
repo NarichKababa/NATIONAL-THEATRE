@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserProfile = async (authUser: SupabaseUser) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -59,11 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Error loading user profile:', error);
         // If user profile doesn't exist, create it
         if (error.code === 'PGRST116') {
           await createUserProfile(authUser);
           return;
+        } else {
+          console.error('Error loading user profile:', error);
         }
       } else if (data) {
         setUser({
@@ -94,15 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { error } = await supabase
         .from('users')
-        .insert(userData);
+        .upsert(userData, { onConflict: 'id' });
 
       if (error) {
         console.error('Error creating user profile:', error);
+        throw error;
       } else {
         setUser(userData);
       }
     } catch (error) {
       console.error('Error in createUserProfile:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -110,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -122,24 +127,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Registration error:', error);
-        return false;
+        throw new Error(error.message);
       }
 
       if (data.user) {
-        // The user profile will be created by the database trigger
-        // or by the auth state change handler
+        // Wait a moment for the trigger to create the user profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
         return true;
       }
 
       return false;
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -147,23 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Login error:', error);
-        return false;
+        throw new Error(error.message);
       }
 
       if (data.user) {
-        // Update last login time
-        await supabase
-          .from('users')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', data.user.id);
-
+        // The login trigger will handle updating last_login
         return true;
       }
 
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
