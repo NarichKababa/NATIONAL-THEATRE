@@ -28,16 +28,22 @@ export default function LoginModal({ onClose }: LoginModalProps) {
       let success = false;
       if (isLogin) {
         success = await login(formData.email, formData.password);
+        if (!success) {
+          setError('Invalid email or password. Please try again.');
+        }
       } else {
         success = await register(formData.name, formData.email, formData.password);
+        if (!success) {
+          setError('Registration failed. Please try again.');
+        }
       }
 
       if (success) {
+        setFormData({ name: '', email: '', password: '' });
         onClose();
-      } else {
-        setError(isLogin ? 'Invalid email or password. Please try again.' : 'Registration failed. Please try again.');
       }
     } catch (err) {
+      console.error('Authentication error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);

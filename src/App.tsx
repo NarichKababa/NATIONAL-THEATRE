@@ -29,11 +29,11 @@ function AppContent() {
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route 
             path="/profile" 
-            element={user ? <ProfilePage /> : <Navigate to="/" />} 
+            element={user ? <ProfilePage /> : <Navigate to="/" replace />} 
           />
           <Route 
             path="/admin" 
-            element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} 
+            element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" replace />} 
           />
         </Routes>
 

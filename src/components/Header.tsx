@@ -68,7 +68,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"
-                    className="bg-amber-100 text-amber-800 px-3 py-1 rounded-md text-sm font-medium hover:bg-amber-200"
+                    className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm font-medium hover:bg-purple-200"
                   >
                     Admin
                   </Link>
