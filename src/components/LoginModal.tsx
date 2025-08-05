@@ -145,9 +145,8 @@ export default function LoginModal({ onClose }: LoginModalProps) {
 
           {isLogin && (
             <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-gray-50 rounded-md">
-              <p><strong>Demo Accounts:</strong></p>
-              <p>User: user@example.com / password</p>
-              <p>Admin: admin@theatre.ug / password</p>
+              <p><strong>New to the platform?</strong></p>
+              <p>Create an account to get started with booking shows and leaving reviews.</p>
             </div>
           )}
         </form>
