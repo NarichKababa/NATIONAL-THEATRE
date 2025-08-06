@@ -126,33 +126,6 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
 
   const loadShows = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('shows')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-
-      const formattedShows = data.map(show => ({
-        id: show.id,
-        title: show.title,
-        date: show.date,
-        time: show.time,
-        venue: show.venue,
-        duration: show.duration,
-        genre: show.genre,
-        description: show.description,
-        image: show.image,
-        price: {
-          vip: show.price_vip,
-          premium: show.price_premium,
-          regular: show.price_regular
-        }
-      }));
-
-      setShows(formattedShows);
-    } catch (error) {
-      console.error('Failed to load shows:', error);
       // Fallback to demo data
       setShows([
         {
@@ -192,6 +165,38 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
           price: { vip: 45000, premium: 30000, regular: 18000 }
         }
       ]);
+      
+      // Try to load from Supabase if available
+      try {
+        const { data, error } = await supabase
+          .from('shows')
+          .select('*')
+          .order('date', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const formattedShows = data.map(show => ({
+            id: show.id,
+            title: show.title,
+            date: show.date,
+            time: show.time,
+            venue: show.venue,
+            duration: show.duration,
+            genre: show.genre,
+            description: show.description,
+            image: show.image,
+            price: {
+              vip: show.price_vip,
+              premium: show.price_premium,
+              regular: show.price_regular
+            }
+          }));
+          setShows(formattedShows);
+        }
+      } catch (supabaseError) {
+        console.warn('Supabase not available, using demo data:', supabaseError);
+      }
+    } catch (error) {
+      console.error('Failed to load shows:', error);
     }
   }, []);
 

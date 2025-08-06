@@ -136,10 +136,11 @@ export default function LoginModal({ onClose }: LoginModalProps) {
           </div>
 
           {isLogin && (
-            <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-blue-50 rounded-md">
-              <p><strong>Demo Account:</strong></p>
-              <p>Register with <code>admin@theatre.ug</code> to get admin access</p>
-              <p>Or create any account to get started as a regular user</p>
+            <div className="text-center text-xs text-gray-500 mt-4 p-3 bg-blue-50 rounded-md space-y-1">
+              <p><strong>Demo Accounts:</strong></p>
+              <p><code>admin@demo.com</code> / <code>admin123</code> (Admin)</p>
+              <p><code>user@demo.com</code> / <code>user123</code> (User)</p>
+              <p>Or create any account to get started!</p>
             </div>
           )}
         </form>
